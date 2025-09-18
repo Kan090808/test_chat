@@ -1,0 +1,20 @@
+# Flutter/Dart/Pub related
+**/build/
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+
+# Visual Studio Code
+.vscode/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Flutter generated files
+flutter_export_environment.sh
+Generated.xcconfig
+
+# Misc
+.DS_Store
