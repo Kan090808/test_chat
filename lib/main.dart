@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
-import 'screens/login_screen.dart';
-import 'screens/rooms_screen.dart';
-import 'services/matrix_service.dart';
+import 'package:test_chat/screens/login_screen.dart';
+import 'package:test_chat/screens/rooms_screen.dart';
+import 'package:test_chat/services/matrix_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +17,7 @@ class MatrixApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => MatrixService()..initialize(),
+      create: (_) => MatrixService(),
       child: MaterialApp(
         title: 'Matrix Chat',
         debugShowCheckedModeBanner: false,
@@ -37,8 +37,22 @@ class MatrixApp extends StatelessWidget {
   }
 }
 
-class MatrixHome extends StatelessWidget {
+class MatrixHome extends StatefulWidget {
   const MatrixHome({super.key});
+
+  @override
+  State<MatrixHome> createState() => _MatrixHomeState();
+}
+
+class _MatrixHomeState extends State<MatrixHome> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the service when the home widget is created
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MatrixService>().initialize();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -19,7 +19,7 @@ class MessageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final bubbleColor = isMine
         ? theme.colorScheme.primaryContainer
-        : theme.colorScheme.surfaceVariant;
+        : theme.colorScheme.surfaceContainerHighest;
     final textColor = isMine
         ? theme.colorScheme.onPrimaryContainer
         : theme.colorScheme.onSurfaceVariant;
@@ -57,19 +57,20 @@ class MessageBubble extends StatelessWidget {
                   Text(
                     sender,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: textColor.withOpacity(0.8),
+                      color: textColor.withValues(alpha: 0.8),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     message,
-                    style: theme.textTheme.bodyLarge?.copyWith(color: textColor),
+                    style:
+                        theme.textTheme.bodyLarge?.copyWith(color: textColor),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     timestamp,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: textColor.withOpacity(0.7),
+                      color: textColor.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

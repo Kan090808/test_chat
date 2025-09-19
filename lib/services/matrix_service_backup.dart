@@ -12,7 +12,7 @@ class MatrixService extends ChangeNotifier {
   bool _isInitializing = true;
   bool _isBusy = false;
   bool _isLoggedIn = false;
-  bool _isInitialized = false;
+  bool _isInitialized = false; // New flag for successful init
   String _homeserver = 'https://matrix.org';
   String? _errorMessage;
   Room? _selectedRoom;
@@ -21,7 +21,6 @@ class MatrixService extends ChangeNotifier {
   bool get isInitializing => _isInitializing;
   bool get isBusy => _isBusy;
   bool get isLoggedIn => _isLoggedIn;
-  bool get isInitialized => _isInitialized;
   String get homeserver => _homeserver;
   String? get errorMessage => _errorMessage;
   Room? get selectedRoom => _selectedRoom;
@@ -30,15 +29,17 @@ class MatrixService extends ChangeNotifier {
       client == null ? [] : List<Room>.from(client!.rooms);
 
   Future<void> initialize() async {
-    if (!_isInitializing || _isInitialized) {
+    if (!_isInitializing) {
       return;
     }
     try {
+      // Initialize client with proper configuration
       client = Client(
         'test_chat_flutter',
+        httpClient: _createHttpClient(),
       );
       await client!.init();
-      _isInitialized = true;
+      _isInitialized = true; // Set only on success
       _syncSubscription = client!.onSync.stream.listen((_) {
         notifyListeners();
       });
@@ -47,11 +48,35 @@ class MatrixService extends ChangeNotifier {
         debugPrint('Failed to initialise Matrix client: $error\n$stackTrace');
       }
       _errorMessage = error.toString();
-      _isInitialized = false;
-      client = null;
+      _isInitialized = false; // Ensure flag is false on failure
+      client = null; // Clean up on failure
     } finally {
       _isInitializing = false;
       notifyListeners();
+    }
+  }
+
+  /// Creates an HTTP client with proper timeout and connection settings
+  dynamic _createHttpClient() {
+    try {
+      // Try to create an HttpClient for better configuration
+      final httpClient = HttpClient();
+      httpClient.connectionTimeout = const Duration(seconds: 30);
+      httpClient.idleTimeout = const Duration(seconds: 60);
+      // Enable proper SSL/TLS handling
+      httpClient.badCertificateCallback = (cert, host, port) {
+        // In production, you should properly validate certificates
+        if (kDebugMode) {
+          debugPrint('Bad certificate for $host:$port');
+        }
+        return false; // Reject bad certificates in production
+      };
+      return httpClient;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Failed to create custom HttpClient: $e');
+      }
+      return null; // Let Matrix SDK use default client
     }
   }
 
@@ -63,16 +88,10 @@ class MatrixService extends ChangeNotifier {
     _setBusy(true);
     _errorMessage = null;
 
-    // Ensure client is initialized before proceeding
-    if (!_isInitialized || client == null) {
-      if (_isInitializing) {
-        await initialize();
-      } else {
-        _isInitializing = true;
-        await initialize();
-      }
+    // Ensure client is initialized before attempting login
+    if (_isInitializing) {
+      await initialize();
     }
-
     if (client == null) {
       _errorMessage = 'Client initialization failed. Please restart the app.';
       _setBusy(false);
@@ -89,11 +108,13 @@ class MatrixService extends ChangeNotifier {
             homeserver.trim().isEmpty ? _homeserver : homeserver.trim();
         _homeserver = trimmedHomeserver;
 
+        // Validate homeserver URL format
         final uri = Uri.tryParse(_homeserver);
         if (uri == null || !uri.hasScheme || (!uri.scheme.startsWith('http'))) {
           throw Exception('Invalid homeserver URL: $_homeserver');
         }
 
+        // Check homeserver with timeout
         await client!
             .checkHomeserver(Uri.parse(_homeserver))
             .timeout(const Duration(seconds: 30));
@@ -111,7 +132,7 @@ class MatrixService extends ChangeNotifier {
         if (client!.rooms.isNotEmpty) {
           await selectRoom(client!.rooms.first);
         }
-        break;
+        break; // Success, exit retry loop
       } on TimeoutException {
         retryCount++;
         _errorMessage =
@@ -167,7 +188,7 @@ class MatrixService extends ChangeNotifier {
         if (kDebugMode) {
           debugPrint('Matrix login failed: $error\n$stackTrace');
         }
-        break;
+        break; // Don't retry for authentication errors
       }
     }
 
@@ -177,6 +198,7 @@ class MatrixService extends ChangeNotifier {
 
   Future<void> selectRoom(Room room) async {
     try {
+      // Ensure client is initialized
       if (_isInitializing) {
         await initialize();
       }
@@ -246,6 +268,7 @@ class MatrixService extends ChangeNotifier {
       if (kDebugMode) {
         debugPrint('Matrix logout failed: $error\n$stackTrace');
       }
+      // Continue with cleanup even if logout fails
     } finally {
       _isLoggedIn = false;
       _selectedRoom = null;

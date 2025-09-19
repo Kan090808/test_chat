@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../services/matrix_service.dart';
+import 'package:test_chat/services/matrix_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,11 +20,18 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    final service = context.read<MatrixService>();
-    _homeserverController =
-        TextEditingController(text: service.homeserver);
+    _homeserverController = TextEditingController();
     _usernameController = TextEditingController();
     _passwordController = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final service = context.read<MatrixService>();
+    if (_homeserverController.text.isEmpty) {
+      _homeserverController.text = service.homeserver;
+    }
   }
 
   @override
@@ -40,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     final service = context.read<MatrixService>();
+
     setState(() {
       _error = null;
     });
@@ -96,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _homeserverController,
                       decoration: const InputDecoration(
                         labelText: 'Homeserver URL',
-                        hintText: 'https://matrix-client.matrix.org',
+                        hintText: 'https://matrix.org',
                       ),
                       keyboardType: TextInputType.url,
                       validator: (value) {

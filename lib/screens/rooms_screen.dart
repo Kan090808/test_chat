@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:matrix/matrix.dart';
 import 'package:provider/provider.dart';
 
-import '../services/matrix_service.dart';
-import 'chat_screen.dart';
+import 'package:test_chat/services/matrix_service.dart';
+import 'package:test_chat/screens/chat_screen.dart';
 
 class RoomsScreen extends StatelessWidget {
   const RoomsScreen({super.key});
@@ -14,7 +14,8 @@ class RoomsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final service = context.watch<MatrixService>();
     final rooms = service.joinedRooms;
-    final selectedRoom = service.selectedRoom ?? (rooms.isNotEmpty ? rooms.first : null);
+    final selectedRoom =
+        service.selectedRoom ?? (rooms.isNotEmpty ? rooms.first : null);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -22,10 +23,13 @@ class RoomsScreen extends StatelessWidget {
         if (isWide) {
           return Scaffold(
             appBar: AppBar(
-              title: Text(selectedRoom != null ? _roomTitle(selectedRoom) : 'Matrix Chat'),
+              title: Text(selectedRoom != null
+                  ? _roomTitle(selectedRoom)
+                  : 'Matrix Chat'),
               actions: [
                 IconButton(
-                  onPressed: () => context.read<MatrixService>().refreshSelectedRoom(),
+                  onPressed: () =>
+                      context.read<MatrixService>().refreshSelectedRoom(),
                   icon: const Icon(Icons.refresh),
                   tooltip: '重新整理',
                 ),
@@ -39,7 +43,8 @@ class RoomsScreen extends StatelessWidget {
             body: Row(
               children: [
                 NavigationRail(
-                  selectedIndex: selectedRoom != null ? rooms.indexOf(selectedRoom) : -1,
+                  selectedIndex:
+                      selectedRoom != null ? rooms.indexOf(selectedRoom) : -1,
                   onDestinationSelected: (index) {
                     unawaited(
                       context.read<MatrixService>().selectRoom(rooms[index]),
@@ -70,10 +75,13 @@ class RoomsScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(selectedRoom != null ? _roomTitle(selectedRoom) : 'Matrix Chat'),
+            title: Text(selectedRoom != null
+                ? _roomTitle(selectedRoom)
+                : 'Matrix Chat'),
             actions: [
               IconButton(
-                onPressed: () => context.read<MatrixService>().refreshSelectedRoom(),
+                onPressed: () =>
+                    context.read<MatrixService>().refreshSelectedRoom(),
                 icon: const Icon(Icons.refresh),
                 tooltip: '重新整理',
               ),
@@ -118,7 +126,9 @@ class RoomsScreen extends StatelessWidget {
                                 onTap: () {
                                   Navigator.of(context).pop();
                                   unawaited(
-                                    context.read<MatrixService>().selectRoom(room),
+                                    context
+                                        .read<MatrixService>()
+                                        .selectRoom(room),
                                   );
                                 },
                               );
@@ -136,11 +146,12 @@ class RoomsScreen extends StatelessWidget {
   }
 
   String _roomTitle(Room room) {
-    if (room.displayname != null && room.displayname!.isNotEmpty) {
-      return room.displayname!;
+    final displayName = room.getLocalizedDisplayname();
+    if (displayName.isNotEmpty) {
+      return displayName;
     }
-    if (room.name != null && room.name!.isNotEmpty) {
-      return room.name!;
+    if (room.name.isNotEmpty) {
+      return room.name;
     }
     return room.id;
   }
